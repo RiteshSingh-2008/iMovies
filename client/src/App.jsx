@@ -21,6 +21,7 @@ function Home({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   
   async function toggleFavorite(movieId) {
@@ -132,33 +133,56 @@ useEffect(() => {
   };
 }, [user]);
 
+return (
+  <div className="app">
+    <header className="navbar">
+      <Link className="logo" to="/">
+        i<span>MOVIES</span>
+      </Link>
 
-  return (
-    <div className="app">
-      <header className="navbar">
-        <Link className="logo" to="/">i<span>MOVIES</span></Link>
-        <nav>
-          
-        <nav>
-          <a href="#home">Home</a>
-          <a href="#movies">Movies</a>
-          <a href="#about">About</a>
-          {user && <Link to="/my-bookings">My Bookings</Link>}
-          {user && <Link to="/my-favorites">My Favorites</Link>}
-        </nav>
+      <button
+        className="menu-toggle"
+        onClick={() => setMenuOpen(!menuOpen)}
+        aria-label="Toggle navigation menu"
+        aria-expanded={menuOpen}
+        >
+         {menuOpen ? "✕" : "☰"}
+      </button>
 
-        </nav>
-        {user ? (
-          <div className="user-actions">
-            <span className="welcome-user">Hi, {user.name}</span>
-            <button className="login-button" onClick={onLogout}>Logout</button>
-          </div>
-        ) : (
-          <button className="login-button" onClick={() => navigate("/login")}>
-            Login
+      <nav className={`desktop-nav ${menuOpen ? "menu-open" : ""}`}>
+          <a href="#home" onClick={() => setMenuOpen(false)}>Home</a>
+          <a href="#movies" onClick={() => setMenuOpen(false)}>Movies</a>
+          <a href="#about" onClick={() => setMenuOpen(false)}>About</a>
+
+          {user && (
+            <Link to="/my-bookings" onClick={() => setMenuOpen(false)}>
+              My Bookings
+            </Link>
+          )}
+
+          {user && (
+            <Link to="/my-favorites" onClick={() => setMenuOpen(false)}>
+              My Favorites
+            </Link>
+          )}
+      </nav>
+
+      {user ? (
+        <div className="user-actions">
+          <span className="welcome-user">Hi, {user.name}</span>
+          <button className="login-button" onClick={onLogout}>
+            Logout
           </button>
-        )}
-      </header>
+        </div>
+      ) : (
+        <button
+          className="login-button"
+          onClick={() => navigate("/login")}
+        >
+          Login
+        </button>
+      )}
+    </header>
 
       <main>
         <section className="hero" id="home">

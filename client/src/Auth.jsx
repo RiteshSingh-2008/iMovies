@@ -1,23 +1,123 @@
-import { useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Auth.css";
 
 const API_URL = "http://localhost:5000";
+const GOOGLE_CLIENT_ID = "635266089873-n5qcsjtmpghi6h45pfksfitqfp9m1c81.apps.googleusercontent.com";
 
 function Auth({ mode, onLogin }) {
   const isRegister = mode === "register";
   const navigate = useNavigate();
+  const googleButtonRef = useRef(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isRegister) return;
+
+    let cancelled = false;
+
+    function initializeGoogle() {
+      if (
+        cancelled ||
+        !googleButtonRef.current ||
+        !window.google?.accounts?.id
+      ) {
+        return;
+      }
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async (response) => {
+          if (!response.credential) {
+            setError("Google sign-in did not return a credential.");
+            return;
+          }
+
+          setError("");
+          setLoading(true);
+
+          try {
+            const result = await fetch(`${API_URL}/api/auth/google`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                credential: response.credential,
+              }),
+            });
+
+            const data = await result.json();
+
+            if (!result.ok) {
+              throw new Error(data.message || "Google login failed");
+            }
+
+            onLogin(data);
+            navigate("/");
+          } catch (err) {
+            setError(err.message || "Unable to connect to the server");
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+
+      googleButtonRef.current.innerHTML = "";
+
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "rectangular",
+        width: 320,
+      });
+    }
+
+    if (window.google?.accounts?.id) {
+      initializeGoogle();
+    } else {
+      let script = document.querySelector(
+        'script[src="https://accounts.google.com/gsi/client"]'
+      );
+
+      if (!script) {
+        script = document.createElement("script");
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+
+      script.addEventListener("load", initializeGoogle);
+
+      return () => {
+        cancelled = true;
+        script.removeEventListener("load", initializeGoogle);
+      };
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isRegister, navigate, onLogin]);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
-    setLoading(true);
+
+    if (isRegister && password !== confirmPassword) {
+     setError("Passwords do not match.");
+      return;
+     }
+
+      setLoading(true);
 
     try {
       const response = await fetch(
@@ -40,6 +140,7 @@ function Auth({ mode, onLogin }) {
       if (isRegister) {
         setError("Registration successful! You can now log in.");
         setPassword("");
+        setConfirmPassword("");
       } else {
         onLogin(data);
         navigate("/");
@@ -54,12 +155,16 @@ function Auth({ mode, onLogin }) {
   return (
     <main className="auth-page">
       <form className="auth-card" onSubmit={handleSubmit}>
-        <Link className="auth-logo" to="/">i<span>MOVIES</span></Link>
+        <Link className="auth-logo" to="/">
+          i<span>MOVIES</span>
+        </Link>
 
         <p className="auth-eyebrow">
           {isRegister ? "JOIN THE EXPERIENCE" : "WELCOME BACK"}
         </p>
+
         <h1>{isRegister ? "Create account" : "Sign in"}</h1>
+
         <p className="auth-subtitle">
           {isRegister
             ? "Create your account to book your next movie."
@@ -104,7 +209,26 @@ function Auth({ mode, onLogin }) {
           />
         </label>
 
-        {error && <p className="auth-message" role="status">{error}</p>}
+        {isRegister && (
+        <label>
+          Confirm Password
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            minLength={8}
+            autoComplete="new-password"
+            placeholder="Re-enter your password"
+          />
+        </label>
+        )}
+
+        {error && (
+          <p className="auth-message" role="status">
+            {error}
+          </p>
+        )}
 
         <button className="auth-submit" disabled={loading}>
           {loading
@@ -114,6 +238,15 @@ function Auth({ mode, onLogin }) {
               : "Sign in"}
         </button>
 
+        {!isRegister && (
+          <>
+            <div className="auth-divider">
+              <span>OR CONTINUE WITH</span>
+            </div>
+            <div className="google-button-wrap" ref={googleButtonRef} />
+          </>
+        )}
+
         <p className="auth-switch">
           {isRegister ? "Already have an account?" : "New to IMovies?"}{" "}
           <Link to={isRegister ? "/login" : "/register"}>
@@ -121,7 +254,9 @@ function Auth({ mode, onLogin }) {
           </Link>
         </p>
 
-        <Link className="auth-home" to="/">← Back to movies</Link>
+        <Link className="auth-home" to="/">
+          ← Back to movies
+        </Link>
       </form>
     </main>
   );

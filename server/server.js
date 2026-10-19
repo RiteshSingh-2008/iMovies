@@ -149,6 +149,109 @@ app.post("/api/auth/login", async (req, res) => {
     }
 });
 
+
+app.post("/api/auth/google", async (req, res) => {
+    try {
+        const { credential } = req.body;
+
+        if (!credential) {
+            return res.status(400).json({
+                message: "Google credential is required"
+            });
+        }
+
+        if (!process.env.GOOGLE_CLIENT_ID) {
+            throw new Error("GOOGLE_CLIENT_ID is missing from .env");
+        }
+
+        if (!process.env.JWT_SECRET) {
+            throw new Error("JWT_SECRET is missing from .env");
+        }
+
+        const { OAuth2Client } = require("google-auth-library");
+        const googleClient = new OAuth2Client(
+            process.env.GOOGLE_CLIENT_ID
+        );
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+
+        if (!payload || !payload.sub || !payload.email || !payload.email_verified) {
+            return res.status(401).json({
+                message: "Google account could not be verified"
+            });
+        }
+
+        const googleId = payload.sub;
+        const email = payload.email.trim().toLowerCase();
+        const name = payload.name || email.split("@")[0];
+
+        let user = await User.findOne({ googleId });
+
+        if (!user) {
+            user = await User.findOne({ email });
+
+            if (user) {
+                return res.status(409).json({
+                    message: "This email already has an account. Please sign in with your password first."
+                });
+            }
+
+            user = await User.create({
+                name,
+                email,
+                googleId
+            });
+        }
+
+        const token = jwt.sign(
+            {
+                userId: user._id.toString(),
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        );
+
+        return res.json({
+            message: "Google login successful",
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+      }catch (error) {
+        console.error("Google login error:", error.message);
+
+        if (error.code === 11000) {
+            return res.status(409).json({
+                message: "This account may already exist. Please try signing in again."
+            });
+        }
+
+        if (
+            error.message?.includes("GOOGLE_CLIENT_ID is missing") ||
+            error.message?.includes("JWT_SECRET is missing")
+        ) {
+            return res.status(500).json({
+                message: "Server authentication configuration error"
+            });
+        }
+
+        return res.status(401).json({
+            message: "Google login failed. Please try again."
+        });
+    }
+});
+
+
 // Get all active movies
 app.get("/api/movies", async (req, res) => {
     try {

@@ -1,0 +1,186 @@
+/* Admin Dashboard */
+.admin-dashboard {
+  width: min(1200px, 92%);
+  margin: 40px auto;
+  color: #f5f3ff;
+}
+
+.admin-dashboard h1 {
+  margin: 16px 0 8px;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+
+.admin-dashboard h2 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.admin-dashboard > section {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(25, 20, 38, 0.85);
+  border: 1px solid #49376a;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.admin-dashboard button {
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.admin-dashboard button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.admin-dashboard input,
+.admin-dashboard textarea,
+.admin-dashboard select {
+  box-sizing: border-box;
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+  .admin-dashboard {
+    width: 94%;
+    margin: 24px auto;
+  }
+
+  .admin-dashboard section {
+    padding: 16px;
+    margin-top: 24px;
+  }
+
+  .admin-dashboard h2 {
+    font-size: 1.25rem;
+  }
+}
+.admin-title {
+  margin: 24px 2px 8px;
+  font-size: clamp(2rem, 4vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: linear-gradient(90deg, #ffffff, #c4a7ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.admin-subtitle {
+  margin: 0 0 16px;
+  color: #b8aecb;
+  font-size: 1rem;
+  line-height: 1.0;
+}
+
+/* Consistent form controls */
+.admin-dashboard input,
+.admin-dashboard textarea,
+.admin-dashboard select {
+  width: 100%;
+  padding: 12px 14px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  background: #171220;
+  color: #f5f3ff;
+  border: 2px solid #594477;
+  outline: none;
+  font: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-dashboard input:focus,
+.admin-dashboard textarea:focus,
+.admin-dashboard select:focus {
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
+}
+
+.admin-dashboard button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-dashboard button:focus-visible {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 3px;
+}
+
+.admin-dashboard button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Movie and showtime cards */
+.admin-dashboard section p {
+  line-height: 1.6;
+}
+
+.admin-dashboard section strong {
+  color: #e9ddff;
+  font-size: 1.05rem;
+}
+
+/* Responsive card layout */
+@media (max-width: 600px) {
+  .admin-dashboard section > div {
+    overflow-wrap: anywhere;
+  }
+
+  .admin-dashboard button {
+    max-width: 100%;
+  }
+}
+
+/* Compact, readable admin forms */
+.admin-dashboard form {
+  max-width: 850px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.admin-dashboard label {
+  display: block;
+  margin-bottom: 8px;
+  color: #e9ddff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.admin-dashboard input,
+.admin-dashboard textarea,
+.admin-dashboard select {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.admin-dashboard textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.admin-dashboard form button[type="submit"] {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.admin-dashboard section h2 {
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .admin-dashboard form {
+    max-width: 100%;
+  }
+}

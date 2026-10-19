@@ -1218,7 +1218,7 @@ app.get("/api/bookings/my", protect, async (req, res) => {
         path: "show",
         populate: {
           path: "movie",
-          select: "title language duration",
+          select: "title language duration posterUrl",
         },
       })
       .sort({ createdAt: -1 });

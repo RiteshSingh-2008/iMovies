@@ -11,6 +11,8 @@ const { protect, adminOnly } = require("./middleware/auth");
 const Show = require("./models/Show");
 const Booking = require("./models/Booking");
 const Payment = require("./models/Payment");
+const { sendEmail } = require("./emailService");
+const { startReminderScheduler } = require("./reminderService");
 const Favorite = require("./models/Favorite");
 
 require("dotenv").config();
@@ -1105,11 +1107,96 @@ app.post("/api/payments/verify", protect, async (req, res) => {
       await claimedPayment.save({ session });
     });
 
+    
+    // Load complete booking details for email notifications.
+    const bookingForEmail = await Booking.findById(createdBooking._id)
+      .populate("user", "name email")
+      .populate({
+        path: "show",
+        populate: {
+          path: "movie",
+          select: "title",
+        },
+      });
+
+    
+    // Send booking confirmation and payment receipt emails.
+    if (bookingForEmail) {
+      try {
+        const show = bookingForEmail.show;
+        const movie = show?.movie;
+        const user = bookingForEmail.user;
+
+        if (user?.email && show) {
+          const showDate = new Date(show.showDate).toLocaleDateString(
+            "en-IN",
+            {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }
+          );
+
+          const seats = bookingForEmail.seats.join(", ");
+          const amount = `₹${bookingForEmail.totalAmount.toFixed(2)}`;
+          const movieTitle = movie?.title || "Movie";
+          const bookingId = bookingForEmail._id.toString();
+
+          const emailDetails = `
+            Movie: ${movieTitle}
+            Cinema: ${show.cinemaName}
+            Screen: ${show.screenName}
+            Date: ${showDate}
+            Time: ${show.startTime}
+            Seats: ${seats}
+            Booking reference: ${bookingId}
+            Amount paid: ${amount}
+            Payment ID: ${bookingForEmail.razorpayPaymentId}
+            `;
+
+          await sendEmail({
+            to: user.email,
+            subject: `iMovies Booking Confirmed - ${movieTitle}`,
+            text: `Hello ${user.name},\n\nYour booking is confirmed and your payment was verified successfully.\n\n${emailDetails}\n\nEnjoy your movie!\nTeam iMovies`,
+            html: `
+              <h2>Booking Confirmed!</h2>
+              <p>Hello ${user.name},</p>
+              <p>Your payment was verified successfully and your booking is confirmed.</p>
+              <pre>${emailDetails}</pre>
+              <p>Enjoy your movie!<br/>Team iMovies</p>
+            `,
+          });
+
+          await sendEmail({
+            to: user.email,
+            subject: `iMovies Payment Receipt - ${bookingId}`,
+            text: `Hello ${user.name},\n\nYour payment receipt is ready.\n\n${emailDetails}\n\nThank you for booking with iMovies.`,
+            html: `
+              <h2>Payment Receipt</h2>
+              <p>Hello ${user.name},</p>
+              <p>Your payment was successfully verified.</p>
+              <pre>${emailDetails}</pre>
+              <p>Thank you for booking with iMovies.</p>
+            `,
+          });
+
+          console.log("Booking confirmation and receipt emails sent.");
+        }
+      } catch (emailError) {
+        console.error(
+          "Booking email notification failed:",
+          emailError.message
+        );
+      }
+    }
+  
+
     return res.json({
       message: "Payment verified and booking confirmed",
       paymentStatus: "paid",
-      booking: createdBooking,
+      booking: bookingForEmail,
     });
+
   } catch (error) {
     console.error("Payment verification error:", error.message);
 
@@ -1423,7 +1510,8 @@ app.delete("/api/favorites/:movieId", protect, async (req, res) => {
   }
 });
 
-// Start server after MongoDB connects
+
+ // Start server after MongoDB connects
 async function startServer() {
     try {
         if (!process.env.MONGO_URI) {
@@ -1437,6 +1525,9 @@ async function startServer() {
 
         app.listen(PORT, () => {
             console.log(`IMovies server is running on port ${PORT}`);
+
+            // Start upcoming-show reminder emails
+            startReminderScheduler();
         });
     } catch (error) {
         console.error("Startup failed:", error.message);

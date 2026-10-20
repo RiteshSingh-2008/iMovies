@@ -42,6 +42,17 @@ const bookingSchema = new mongoose.Schema(
             default: "pending"
             },
 
+            reminderStatus: {
+            type: String,
+            enum: ["pending", "processing", "sent"],
+            default: "pending"
+            },
+
+            reminderProcessingAt: {
+            type: Date,
+            default: null
+            },
+
             razorpayOrderId: {
             type: String,
             default: null

@@ -440,54 +440,41 @@ async function handleShowSubmit(event) {
         </form>
         </section>
 
-        <section style={{ marginTop: "48px" }}>
-        <h2>Manage Movies</h2>
+        <section className="manage-movies-section">
+          <h2>Manage Movies</h2>
 
-        {movies.map((movie) => (
-            <div
-            key={movie._id}
-            style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "16px",
-                padding: "16px",
-                marginBottom: "12px",
-                border: "1px solid #49376a",
-                borderRadius: "8px",
-            }}
-            >
-            <div>
-                <strong>{movie.title}</strong>
-                <p>{movie.language} · {movie.duration} min</p>
-            </div>
+          <div className="manage-movies-list">
+            {movies.map((movie) => (
+              <div className="manage-movie-row" key={movie._id}>
+                <div className="manage-movie-info">
+                  <strong>{movie.title}</strong>
+                  <p>
+                    {movie.language} · {movie.duration} min
+                  </p>
+                </div>
 
-            <button
-                type="button"
-                onClick={() => handleEditMovie(movie)}
-            >
-                Edit
-            </button>
-            
-            <button
-            type="button"
-            onClick={() => handleDeleteMovie(movie._id)}
-            style={{
-                marginLeft: "8px",
-                padding: "8px 12px",
-                background: "#dc2626",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-            }}
-            >
-            Delete
-            </button>
+                <div className="manage-movie-actions">
+                  <button
+                    type="button"
+                    className="edit-movie-btn"
+                    onClick={() => handleEditMovie(movie)}
+                  >
+                    Edit
+                  </button>
 
-            </div>
-        ))}
+                  <button
+                    type="button"
+                    className="delete-movie-btn"
+                    onClick={() => handleDeleteMovie(movie._id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
+
         
         <section style={{ marginTop: "48px" }}>
         <h2>Manage Showtimes</h2>

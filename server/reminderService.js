@@ -7,25 +7,7 @@ function startReminderScheduler() {
   cron.schedule("*/5 * * * *", async () => {
     try {
         
-        
-        const processingTimeout = new Date(Date.now() - 15 * 60 * 1000);
-
-       
-        await Booking.updateOne(
-        {
-            _id: claimedBooking._id,
-            reminderStatus: "processing",
-        },
-        {
-            $set: {
-            reminderStatus: "sent",
-            reminderProcessingAt: null,
-            },
-        }
-        );
-
-
-      const now = new Date(); 
+        const now = new Date(); 
         const reminderTarget = new Date(
         now.getTime() + 24 * 60 * 60 * 1000
         );
@@ -68,9 +50,7 @@ function startReminderScheduler() {
         console.log(
             `[TEST MODE] Reminder candidate: booking ${booking._id}`
         );
-        continue;
         }
-
         if (!show || !user?.email) continue;
 
         const [year, month, day] = new Intl.DateTimeFormat("en-CA", {
@@ -106,34 +86,39 @@ function startReminderScheduler() {
         
         // Claim the booking before sending to prevent duplicate emails.
        
-        const claimedBooking = await Booking.findOneAndUpdate(
-        {
+        let claimedBooking = booking;
+
+        if (process.env.NODE_ENV !== "test") {
+        claimedBooking = await Booking.findOneAndUpdate(
+            {
             _id: booking._id,
             status: "confirmed",
             paymentStatus: "paid",
             $or: [
-            { reminderStatus: "pending" },
-            { reminderStatus: { $exists: false } },
+                { reminderStatus: "pending" },
+                { reminderStatus: { $exists: false } },
             ],
-        },
-        
-        {
-        $set: {
-            reminderStatus: "processing",
-            reminderProcessingAt: new Date(),
-        },
-        },
-
-        { new: true }
+            },
+            {
+            $set: {
+                reminderStatus: "processing",
+                reminderProcessingAt: new Date(),
+            },
+            },
+            { new: true }
         );
 
         if (!claimedBooking) {
-          continue;
+            continue;
         }
+        }
+
         
         try {
           await sendEmail({
-            to: user.email,
+            to: process.env.NODE_ENV === "test"
+            ? process.env.EMAIL_USER
+            : user.email,
             subject: `Reminder: ${movieTitle} is coming up!`,
             text: `Hello ${user.name},\n\nYour movie is coming up soon!\n\nMovie: ${movieTitle}\nCinema: ${show.cinemaName}\nScreen: ${show.screenName}\nShowtime: ${showDate}\nSeats: ${seats}\n\nEnjoy your movie!\nTeam iMovies`,
             html: `
@@ -164,18 +149,20 @@ function startReminderScheduler() {
 
           console.log(`Show reminder sent for booking ${booking._id}`);
         } catch (emailError) {
-          await Booking.updateOne(
-            {
-              _id: claimedBooking._id,
-              reminderStatus: "processing",
-            },
-           {
-            $set: {
-                reminderStatus: "pending",
-                reminderProcessingAt: null,
-            },
-            }
+          if (process.env.NODE_ENV !== "test") {
+            await Booking.updateOne(
+              {
+                _id: claimedBooking._id,
+                reminderStatus: "processing",
+              },
+              {
+                $set: {
+                  reminderStatus: "pending",
+                  reminderProcessingAt: null,
+                },
+              }
             );
+          }
 
           console.error(
             `Reminder failed for booking ${booking._id}:`,
@@ -183,12 +170,14 @@ function startReminderScheduler() {
           );
         }
       }
-    } catch (error) {
-      console.error("Show reminder scheduler error:", error.message);
+    } catch (schedulerError) {
+      console.error(
+        "Reminder scheduler error:",
+        schedulerError.message
+      );
     }
   });
 
   console.log("Upcoming-show reminder scheduler started.");
 }
-
 module.exports = { startReminderScheduler };

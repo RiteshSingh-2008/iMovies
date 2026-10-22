@@ -184,3 +184,93 @@
     max-width: 100%;
   }
 }
+
+.manage-movies-section {
+  margin-top: 48px;
+  width: 100%;
+}
+
+.manage-movies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manage-movie-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 20px;
+  border: 1px solid #49376a;
+  border-radius: 10px;
+  background: #191323;
+  box-sizing: border-box;
+}
+
+.manage-movie-info {
+  min-width: 0;
+}
+
+.manage-movie-info strong {
+  display: block;
+  font-size: 18px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.manage-movie-info p {
+  margin: 6px 0 0;
+  color: #d6cce8;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.manage-movie-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.manage-movie-actions button {
+  min-width: 88px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.edit-movie-btn {
+  background: #686273;
+}
+
+.edit-movie-btn:hover {
+  background: #7b728c;
+}
+
+.delete-movie-btn {
+  background: #dc2626;
+}
+
+.delete-movie-btn:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 600px) {
+  .manage-movie-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .manage-movie-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
